@@ -51,12 +51,28 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   onToggleComplete,
 }) => {
   const dueDate = new Date(todo.dueDate);
-  const formattedDueDate = isValid(dueDate) ? format(dueDate, 'MMM dd, yyyy') : 'No due date';
+  const formattedDueDate = isValid(dueDate) 
+    ? dueDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    : 'No due date';
   const isOverdue = isValid(dueDate) && dueDate < new Date() && !todo.completed;
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't trigger edit if clicking on the checkbox or delete button
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-action="no-edit"]')) {
+      return;
+    }
+    onEdit(todo);
+  };
 
   return (
     <div
-      className="p-4 rounded-lg shadow-sm transition-all hover:shadow-md backdrop-blur-sm"
+      onClick={handleClick}
+      className="p-4 rounded-lg shadow-sm transition-all hover:shadow-md backdrop-blur-sm cursor-pointer"
       style={{
         backgroundColor: `${theme.light.surface}80`,
         borderLeft: `4px solid ${priorityColors[todo.priority]}`,
@@ -65,12 +81,14 @@ export const TodoCard: React.FC<TodoCardProps> = ({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={todo.completed}
-              onChange={(e) => onToggleComplete(todo.id, e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
-            />
+            <div data-action="no-edit">
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={(e) => onToggleComplete(todo.id, e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+            </div>
             <PriorityFlag priority={todo.priority} />
             <h3
               className={`font-semibold ${todo.completed ? 'line-through' : ''}`}
@@ -117,29 +135,12 @@ export const TodoCard: React.FC<TodoCardProps> = ({
             </span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2" data-action="no-edit">
           <button
-            onClick={() => onEdit(todo)}
-            className="p-2 rounded-lg transition-colors hover:bg-gray-100"
-            style={{ color: theme.brand.primary }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={() => onDelete(todo.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(todo.id);
+            }}
             className="p-2 rounded-lg transition-colors hover:bg-gray-100"
             style={{ color: theme.status.deleted }}
           >

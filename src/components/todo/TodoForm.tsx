@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import theme from '@/theme/colors';
 import { Todo, Priority } from '@/types/todo';
@@ -50,7 +50,7 @@ const PriorityFlag: React.FC<{ priority: Priority }> = ({ priority }) => {
 
 export const TodoForm: React.FC<TodoFormProps> = ({ todo, onSubmit, onCancel }) => {
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, formState: { errors }, trigger } = useForm({
     defaultValues: {
       title: todo?.title || '',
       description: todo?.description || '',
@@ -64,6 +64,27 @@ export const TodoForm: React.FC<TodoFormProps> = ({ todo, onSubmit, onCancel }) 
 
   const handleDateClick = () => {
     dateInputRef.current?.showPicker();
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    setValue('dueDate', newDate);
+    trigger('dueDate'); // Trigger validation after setting the value
+  };
+
+  // Format the date for display
+  const formatDisplayDate = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return '';
+    }
   };
 
   const onFormSubmit = (data: {
@@ -177,7 +198,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ todo, onSubmit, onCancel }) 
                     />
                   </svg>
                   <span className="text-sm">
-                    {dueDate || 'Select date'}
+                    {dueDate ? formatDisplayDate(dueDate) : 'Select date'}
                   </span>
                 </div>
               </button>
@@ -186,6 +207,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({ todo, onSubmit, onCancel }) 
                 {...register('dueDate', { required: 'Due date is required' })}
                 className="hidden"
                 ref={dateInputRef}
+                onChange={handleDateChange}
               />
             </div>
             {errors.dueDate && (
