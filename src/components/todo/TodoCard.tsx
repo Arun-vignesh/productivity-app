@@ -11,9 +11,37 @@ interface TodoCardProps {
 }
 
 const priorityColors: Record<Priority, string> = {
-  low: theme.status.completed,
-  medium: theme.status.pending,
-  high: theme.status.deleted,
+  high: theme.status.deleted,     // Red for Priority 1
+  medium: theme.brand.accent,     // Orange for Priority 2
+  low: theme.brand.primary,       // Blue for Priority 3
+};
+
+const PriorityFlag: React.FC<{ priority: Priority }> = ({ priority }) => {
+  const priorityNumber = priority === 'high' ? 1 : priority === 'medium' ? 2 : 3;
+  
+  return (
+    <div className="relative inline-flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-5 h-5"
+        style={{ color: priorityColors[priority] }}
+      >
+        <path
+          fillRule="evenodd"
+          d="M3 2.25a.75.75 0 01.75.75v.54l1.838-.46a9.75 9.75 0 016.725.738l.108.054A8.25 8.25 0 0016.5 4.5a7.5 7.5 0 01-2.064 5.19l-4.84 4.84a7.5 7.5 0 01-5.19 2.064 8.25 8.25 0 00-.054-4.079l-.054-.108a9.75 9.75 0 01-.738-6.725l.46-1.838h-.54a.75.75 0 01-.75-.75zm12.75 0a.75.75 0 01.75.75v.54l1.838-.46a9.75 9.75 0 016.725.738l.108.054A8.25 8.25 0 0016.5 4.5a7.5 7.5 0 01-2.064 5.19l-4.84 4.84a7.5 7.5 0 01-5.19 2.064 8.25 8.25 0 00-.054-4.079l-.054-.108a9.75 9.75 0 01-.738-6.725l.46-1.838h-.54a.75.75 0 01-.75-.75z"
+          clipRule="evenodd"
+        />
+      </svg>
+      <span 
+        className="absolute right-0 -top-1 text-[10px] font-medium"
+        style={{ color: priorityColors[priority] }}
+      >
+        {priorityNumber}
+      </span>
+    </div>
+  );
 };
 
 export const TodoCard: React.FC<TodoCardProps> = ({
@@ -23,7 +51,8 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   onToggleComplete,
 }) => {
   const dueDate = new Date(todo.dueDate);
-  const formattedDueDate = isValid(dueDate) ? format(dueDate, 'MMM dd, yyyy HH:mm') : 'Invalid date';
+  const formattedDueDate = isValid(dueDate) ? format(dueDate, 'MMM dd, yyyy') : 'No due date';
+  const isOverdue = isValid(dueDate) && dueDate < new Date() && !todo.completed;
 
   return (
     <div
@@ -42,11 +71,12 @@ export const TodoCard: React.FC<TodoCardProps> = ({
               onChange={(e) => onToggleComplete(todo.id, e.target.checked)}
               className="h-4 w-4 rounded border-gray-300"
             />
+            <PriorityFlag priority={todo.priority} />
             <h3
               className={`font-semibold ${todo.completed ? 'line-through' : ''}`}
               style={{ color: theme.light.textPrimary }}
             >
-              {todo.title}
+              {todo.title || 'Untitled Task'}
             </h3>
           </div>
           {todo.description && (
@@ -59,19 +89,31 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           )}
           <div className="mt-4 flex items-center gap-4">
             <span
-              className="text-xs px-2 py-1 rounded-full"
-              style={{
-                backgroundColor: `${priorityColors[todo.priority]}20`,
-                color: priorityColors[todo.priority],
-              }}
+              className={`text-xs flex items-center gap-1 ${
+                isOverdue ? 'text-red-500' : ''
+              }`}
+              style={{ color: isOverdue ? theme.status.deleted : theme.light.textSecondary }}
             >
-              {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
-            </span>
-            <span
-              className="text-xs"
-              style={{ color: theme.light.textSecondary }}
-            >
-              Due: {formattedDueDate}
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                strokeWidth={1.5} 
+                stroke="currentColor" 
+                className="w-4 h-4"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" 
+                />
+              </svg>
+              {formattedDueDate}
+              {isOverdue && (
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100">
+                  Overdue
+                </span>
+              )}
             </span>
           </div>
         </div>
